@@ -317,7 +317,7 @@
 
 ;; get start_date or end_date from release_id
 (defun get-date-from-release-id (which_date release_id)
-  (let ((date (query (:select (:to_char which_date "YYYY-DD-MM") :from 'release_note :where (:= 'release_id release_id)))))
+  (let ((date (query (:select (:to_char which_date "YYYY-MM-DD") :from 'release_note :where (:= 'release_id release_id)))))
   (return-from get-date-from-release-id (car (car date)))
   ))
 
@@ -342,7 +342,7 @@
 	       (drakma:http-request url
 		 :parameters (list (cons "access_token" git_token)
 		            (cons "since" (convert-date start_date))
-			    (cons "until"(convert-date  end_date))
+			    (cons "until" (convert-date  end_date))
 			    (cons "per_page" "100"))))))
 
     (loop for rec in json

@@ -20,9 +20,6 @@
 ;;;;;;;;;;date
 
 
-
-
-
 ;;;;;;;;;;;;;;;;;;;;;
 (drakma:http-request "https://api.github.com")
 
@@ -41,7 +38,7 @@ https://api.github.com/repos/Wolfgang3/VacationLabs_exercises/commits?since=2016
 ;;;;; test2
 
 (defvar *json*
-  (cl-json:decode-json-from-source (drakma:http-request "https://api.github.com/repos/Wolfgang3/VacationLabs_exercises/commits?since=2016-03-05&until=2016-03-07&per_page=100&access_token=9640b1ee872d669e33b4fd7e8166d17bf699ff9e"					 
+  (cl-json:decode-json-from-source (drakma:http-request "https://api.github.com/repos/Wolfgang3/VacationLabs_exercises/commits?since=2016-03-05&until=2016-03-07&per_page=100&access_token=a48dd1850229082e31afb5b21dd8ebc52441602f"					 
 					   :want-stream t)
 	    ))
 
@@ -154,7 +151,7 @@ https://api.github.com/repos/Wolfgang3/VacationLabs_exercises/commits?since=2016
 (defvar *end-date*)
 (defvar *completed-tasks-id*)
 (defparameter *asana-api-tasks* "https://app.asana.com/api/1.0/projects/113203241574212/tasks")
-(defparameter *git-api* "https://app.asana.com/api/1.0/projects/113203241574212/tasks")
+
 (defvar *asana-token* "0/af8d04325c718270be55efe98be24869")
 
 ;;=> to convert the given time into a timstemp 
@@ -214,4 +211,76 @@ https://api.github.com/repos/Wolfgang3/VacationLabs_exercises/commits?since=2016
 	 (format t "~s~%" (jsown:val (rest (car (cdr json-obj))) "name" ))
 	 )))
 
-;;;======> for git requests
+;;;++++++++++ for Git requests
+(defvar *git-token* "a48dd1850229082e31afb5b21dd8ebc52441602f")
+(defparameter *git-api* "https://api.github.com")
+
+;;save the user name from the json
+(defparameter *git-username*
+  (let ((json (jsown:parse
+   (drakma:http-request "https://api.github.com/user"
+           :parameters (list (cons "access_token" *git-token*))))))
+   (jsown:val json "login")
+  ))
+
+;;get the list of all the repos
+(defun get-repo-list ()
+  (let ((json (jsown:parse
+   (drakma:http-request "https://api.github.com/user/repos"
+          :parameters (list (cons "access_token" *git-token*)
+		            (cons "per_page" "100")
+			    (cons "sort" "created"))))))
+
+    (loop for rec in json
+      do	   
+      (format t "~s~%" (jsown:val (cdr rec) "full_name")))))
+
+;; save the selected repo from the list
+(defvar *selected-repo* "VacationLabs_exercises")
+
+(setf *str-date* (local-time:format-timestring nil (local-time:parse-timestring "2016-03-05")))
+(setf *end-date* (local-time:format-timestring nil (local-time:parse-timestring "2016-03-07")))
+
+(defvar *commits-sha-list*)
+
+;; get the commits sha from *str-date* to *end-date*
+(defun get-commits-list ()
+  (setf *commits-sha-list* nil)
+  (let* ((url (concatenate 'string "https://api.github.com/repos/" *git-username* "/" *selected-repo* "/commits"))
+	(json (jsown:parse
+   (drakma:http-request url
+          :parameters (list (cons "access_token" *git-token*)
+		            (cons "since" (convert-date *str-date*))
+			    (cons "until"(convert-date  *end-date*))
+			    (cons "per_page" "100"))))))
+    (loop for rec in json
+       do
+	 (setf *commits-sha-list* (append *commits-sha-list* (list (jsown:val  rec "sha")))))))
+;now the *commits-sha-list* will contain all the commits sha list
+
+;get the commit details from the commit *commits-sha-list*
+(defun get-commits-details ()
+  (loop for rec in *commits-sha-list*
+     do
+       (let* ((url (concatenate 'string "https://api.github.com/repos/" *git-username* "/" *selected-repo* "/commits/" rec))
+	      (json-obj (jsown:parse (drakma:http-request url
+	         :parameters (list (cons "access_token" *git-token*))))))
+	 
+	 (format t "~s~%" (jsown:val (jsown:val  json-obj "commit") "message")))))
+
+;get all the pull request from the repo
+(defvar *pull-request-list*)
+(defun get-pull-requests ()
+  (setf *pull-request-list* nil)
+  (let* ((url (concatenate 'string "https://api.github.com/repos/" *git-username* "/" "test_lisp" "/pulls"))
+	(json (jsown:parse
+           (drakma:http-request url
+                  :parameters (list (cons "access_token" *git-token*)
+		                    (cons "sort" "created"))))))
+    (loop for rec in json
+       do
+	 (setf *pull-request-list* (append *pull-request-list* (list (jsown:val  rec "title")))))))
+;now the *pull-request-list* will contain all the prs name
+
+
+
