@@ -6,11 +6,14 @@
 (ql:quickload :simple-date-time)
 (ql:quickload :local-time)
 (ql:quickload :jsown)
+(ql:quickload :cl-json)
 (ql:quickload :drakma)
 (ql:quickload :hunchentoot)
 (ql:quickload :cl-who)
 (ql:quickload :parenscript)
 (ql:quickload :postmodern)
+(ql:quickload :yason)
+
 ;;=========================
 
 ;;======= package ========
@@ -92,7 +95,7 @@
            (:table :border 0 :cellpadding 4 :cellspacing 4
             (:tr
              (:td "User Id: ")
-             (:td (:input :type :text :name "userid")))
+             (:td (:input :type :number :name "userid")))
             (:tr
              (:td "Password: ")
              (:td (:input :type :password :name "pass")))
@@ -135,7 +138,7 @@
 
 
 ;;============= add project ==============
-;;git token= fcce0ae9d92afb90001ea48e7bfd1075be977aef
+;;git token= 0db42a2a18ffbeb1714fa9f8a50e1b80578290a8
 ;;asana token= 0/af8d04325c718270be55efe98be24869
 
 (push (create-regex-dispatcher "/release_notes/project/add_project" 'add-project-form) *dispatch-table*)
@@ -250,7 +253,7 @@
 (defun get-selected-workspace-id (work_id)
   (ps "(alert \"hello\" )" )
   (setf *lol* work_id)
-  )
+ )
 ;;(chain document (cookie == ='username 'John))
 
 ;;get all git repos list
@@ -323,7 +326,7 @@
 
 ;; get start_date or end_date from release_id
 (defun get-date-from-release-id (which_date release_id)
-  (let ((date (query (:select (:to_char which_date "YYYY-DD-MM") :from 'release_note :where (:= 'release_id release_id)))))
+  (let ((date (query (:select (:to_char which_date "YYYY-MM-DD") :from 'release_note :where (:= 'release_id release_id)))))
   (return-from get-date-from-release-id (car (car date)))
   ))
 
@@ -351,7 +354,9 @@
 			    (cons "per_page" "100"))))))
     (loop for rec in json
        do	 
-	 (query (:insert-into 'commit :set 'gr_id gr_id 'release_id release_id 'message (jsown:val (jsown:val  rec "commit") "message") 'sha_key (jsown:val  rec "sha") 'date (jsown:val (jsown:val (jsown:val  rec "commit") "committer") "date"))))))
+	 (query (:insert-into 'commit :set 'gr_id gr_id 'release_id release_id 'message (jsown:val (jsown:val  rec "commit") "message") 'sha_key (jsown:val  rec "sha") 'date (jsown:val (jsown:val (jsown:val  rec "commit") "committer") "date")))
+	 )))
+
 ;;===========================================================
 ;=> (save-all-git-commits "1")
 
@@ -456,3 +461,57 @@
 
 ;;=> (add-content-to-release-note 'c_id  "1" "1" "title 1" "decription 1" "2016-04-30")
 
+;;
+
+;;;;;;;;;;;;;;;;; new clos object ;;;;;;;;;;;;;;;;;;;;
+(defclass user ()
+  ((user_id :initarg :user_id
+	    :reader user-user_id)
+   (name :initarg :name
+	 :reader user-name)
+   (email_id :initarg :email_id
+	     :reader user-email_id)
+   (password :initarg :password
+	     :reader user-password)
+   (proj_list :initarg :proj_list
+	      :reader user-proj_list)))
+
+(defparameter user1 (make-instance 'user :user_id 1 :name "wolfgang furtado" :email_id "wolfgang_furtado@yahoo.com" :password 'wolfgang@3 :proj_list (list)))
+
+;; adding projects to the user
+(setf (user-proj_list user1) (list (user-proj_list user1) 'obj1))
+
+;; method of the class
+(defun add-user (name email_id password proj_list)
+  (make-instance 'user :user_id user_id :name name :email_id email_id :password password :proj_list proj_list))
+
+;; creating a instance of the class
+(defparameter user1 (add-user  "wolfgang furtado" "wol@gmail.com" 'Wolfgang3 (list)))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; project class
+(defclass project ()
+  ((project_id :col-type serial :initarg :project_id
+	       :reader project_id)
+   (user_id :col-type integer :initarg :user_id
+	    :reader project-user_id)
+   (name :col-type (varchar 30) :initarg :name
+	 :reader project-name)
+   (git_token :col-type string :initarg :git_token
+	      :reader project-git_token)
+   (asana_token :col-type string :initarg :asana_token
+		:reader project-asana_token)
+   (created_date :col-type (or db-null timestamp) :col-default (current_timestamp 2)   
+		:initarg :created_date
+		:reader project-created_date))
+  (:metaclass dao-class)
+  (:keys project_id))
+
+(insert-dao (make-instance 'country :name "The Netherlands"
+                                    :inhabitants 16800000
+                                    :sovereign "Willem-Alexander"))
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

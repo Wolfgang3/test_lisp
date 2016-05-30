@@ -1,0 +1,19 @@
+<div>
+  <div class='extra-row'>
+    <p>commited by: 
+    </p>
+    <p>{{content.commiters_name}}
+      <img ng-src='{{content.commiters_avatar}}' alt='profile pic' style='border-radius:50px;width:40px;height:40px' />
+    </p>
+  </div>
+  <div class='extra-row'>
+    <p>commited on: 
+    </p>
+    <p>{{(content.commited_on*1000) - 2209008600000| date: 'MMM d, y'}}
+    </p>
+  </div>
+  <p>
+    <a href='{{content.web_link}}' target='_blank'>Full view
+    </a>
+  </p>
+<div>
