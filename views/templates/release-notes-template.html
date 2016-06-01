@@ -1,0 +1,118 @@
+
+<div class='row'>
+  <div class='col-md-1'></div>
+  <div class='col-md-10'>
+    <h2>
+      <span class='fa fa-hand-o-right'></span> {{release_note_json['project']['name']}}
+      <span class='fa fa-hand-o-left'></span>
+    </h2>
+  </div>
+  <div class='col-md-1'></div>
+</div>
+<div class='row'>
+  <div class='col-md-1'></div>
+  <div class='col-md-10'>
+    <div class='col-md-5'>
+      <h4>
+        <span style='color:blue;font-weight:bold;'>Start date:</span> 
+        <span class="badge" style="font-size: 13px">{{ (release_note_json['release-note']['startDate']*1000) - 2209008600000| date: 'MMM d, y' }}</span>
+      </h4>
+    </div>
+    <div class='col-md-2'>
+      <span class='fa fa-long-arrow-right' style='font-size:42px'></span>
+    </div>
+    <div class='col-md-5'>
+      <h4>
+        <span style='color:blue;font-weight:bold;'>End date:</span> 
+        <span class="badge" style="font-size: 13px">{{ (release_note_json['release-note']['endDate']*1000) - 2209008600000 | date: 'MMM d, y' }}</span>
+      </h4>
+    </div>
+  </div>
+  <div class='col-md-1'></div>
+</div>
+<br />
+<div class='row release-note-and-content'>
+  <!-- to display the LHS editable release note content -->
+  <div class='col-md-6 release-notes-column'>
+    <h4>Release Notes</h4>
+    <hr id='hr-style' />
+    <div class='section-body' ng-controller='sectioncontroller'>
+      <h3>
+        <span class='fa fa-star'></span> 
+        <span id="release-notes-name">{{ release_note_json['release-note']['title']}}</span>
+        <span class='fa fa-star'></span>
+      </h3>
+      <div class='row' style='margin-right: 0px;'>
+        <div class='col-md-1'></div>
+        <div class='col-md-10'>
+          <form>
+            <div class='input-group'>
+              <input type='text' class='form-control' placeholder='Add Section' ng-model='title' required='true' />
+              <span class='input-group-btn'>
+                <button type='submit' class='btn btn-secondary' ng-click='insertSection()'>
+                  <span class='fa fa-plus' style='font-size:17px'></span>
+                </button>
+              </span>
+            </div>
+          </form>
+        </div>
+        <div class='col-md-1'></div>
+      </div>
+      <div id='main-content' >
+          
+          <div section-directive json=section_data_json></div>
+        
+      </div>
+    </div>
+  </div>
+
+  <!-- to display the RHS dragable content(commits,prs n tasks)-->
+  <div class='col-md-6'>
+    <ul class='nav nav-tabs nav-tabs-right'>
+      <li class='active'>
+        <a data-toggle='tab' href='#commit'>Commits
+        </a>
+      </li>
+      <li>
+        <a data-toggle='tab' href='#pull-request'>Pull requests
+        </a>
+      </li>
+      <li>
+        <a data-toggle='tab' href='#task'>Tasks
+        </a>
+      </li>
+    </ul>
+    <div class='tab-content section-body' ng-controller='contentcontroller'>
+
+      <div id='commit' class='tab-pane fade in active '>
+        <h3>Commits</h3>
+        <div content-directive accordian='accordion1' 
+                               json=release_note_json["content-commits"]
+                               type="commit"
+                               deletemethod="deleteRestoreContent(event)" >
+        </div>
+      </div>
+
+      <div id='pull-request' class='tab-pane fade'>
+        <h3>Pull request</h3>
+        <div content-directive accordian='accordion2' 
+                               json=release_note_json["content-prs"]
+                               type="pull-request"
+                               deletemethod="deleteRestoreContent(event)" >
+        </div>
+      </div>
+
+      <div id='task' class='tab-pane fade'>
+        <h3>Task</h3>
+        <div content-directive accordian='accordion3' 
+                       json=release_note_json["content-tasks"]
+                       type="task"
+                       deletemethod="deleteRestoreContent(event)" >
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+<h2></h2>
+<button class="btn btn-primary" ng-click="downloadReleaseNotes()">Download the release note</button>
