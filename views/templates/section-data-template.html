@@ -1,0 +1,19 @@
+
+<div ng-repeat='section in section_data_json["main-content"]'>
+  
+  <h3 class="section-heading">{{section.section_name}}:
+    <span id="section-delete" ng-click="deleteSection(section.section_id)"><i class="fa fa-times"></i></span>
+  </h3>
+  <ul id={{section.section_id}} class="section-style" drop-content action="insertContent({newtitle: newtitle,description: description,contentid: contentid,sectionid: sectionid})" sectionarray='section["data"]'>
+    <li style="margin-left:-19px;font-weight: bold;" ng-if="section['data'][0].length !=0" ng-repeat='section_date in section["data"]'>
+
+      <span>{{section_date.title}}</span>
+      <span style="margin-left:8px;" class="label label-success">on {{ (section_date.date*1000) - 2209008600000 | date: 'MMM d, y'}}</span>
+      <span id="section-content-delete" ng-click="deleteSectionContent(section_date.release_section_content_id)"><i class="fa fa-times"></i></span>
+      <br>
+      <span style="color:grey" ng-if="section_date.description">-- {{section_date.description}}</span>
+    </li> 
+  </ul>
+</div>
+
+

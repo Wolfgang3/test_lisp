@@ -1,0 +1,24 @@
+<div>  
+  <div class='extra-row'>
+    <p>Assigned to: 
+    </p>
+    <p>{{content.completed_by}}
+    </p>
+  </div>
+  <div class='extra-row'>
+    <p>Completed on: 
+    </p>
+    <p>{{(content.completed_date*1000) - 2209008600000| date: 'MMM d, y'}}
+    </p>
+  </div>
+  <div class='extra-row'>
+    <p>Description: 
+    </p>
+    <p>{{content.task_description}}
+    </p>
+  </div>
+  <p>
+    <a href='{{content.web_link}}' target='_blank'>Full view
+    </a>
+  </p>
+</div>

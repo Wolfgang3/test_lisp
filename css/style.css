@@ -1,0 +1,323 @@
+/*================ header start =======================*/
+/*  #8DB2DE */
+/* #8099B7 */
+.navbar.navbar-default {
+    background-color: #8099B7;
+}
+
+#links a:hover  {
+  color: #D0D0D0;
+}
+
+#links a  {
+  color: white;
+}
+
+.logo {
+  padding: 5px;
+  height:66px;
+  width:129px;
+}
+
+.user-dp{
+  height:40px;border-radius:50px;
+}
+
+.working-img {
+  text-align: center;
+  height:400px;
+  border:1px solid grey;
+  max-width: 100%;
+  height: auto;
+}
+
+/*================= header end ========================*/ 
+
+/* selecting repos and tasks*/
+.align-thead th {
+  text-align: center;
+  font-size: 20px
+}
+
+#align-tbody td{
+  vertical-align: middle;
+      font-size: 18px;
+}
+
+/* checkbox style*/
+.state-icon {
+    left: -5px;
+}
+.list-group-item-primary {
+    color: rgb(255, 255, 255);
+    background-color: rgb(66, 139, 202);
+}
+
+/* DEMO ONLY - REMOVES UNWANTED MARGIN */
+.well .list-group {
+    margin-bottom: 0px;
+}
+/* checkbox style*/
+
+.list-group-item {
+
+cursor: pointer;
+}
+
+#checkbox-style{
+  width: 20px; /*Desired width*/
+  height:20px; /*Desired height*/
+  cursor: pointer;
+  margin-right: 15px;
+}
+
+
+
+/* ======>  release note view page*/
+#hr-style { 
+    display: block;
+    margin-top: 1em;
+    margin-bottom: 0em;
+    margin-left: auto;
+    border-style: ridge;
+    border-width: 1px;
+} 
+
+.release-note-container {
+  background-color: white;
+  text-align: center;
+}
+
+.release-note-and-content {
+border: 1px solid #D8D8D8;
+box-shadow: 0 0 16px 5px #C7C7C7;
+}
+
+.release-notes-column {
+  padding-right:20px; 
+  border-right: 1px solid #ccc;
+}
+
+.content-column {
+}
+
+.section-body {
+  height: 500px;
+  overflow-y: scroll;
+}
+
+#main-content {
+  margin-top: 20px;
+}
+
+/* (start) section */
+.section-heading {
+  font-size: 25px;
+  text-align: left;
+  font-weight: bold;
+  color:blue;
+}
+
+.section-style {
+  border:2px dashed #ccc;
+  min-height: 50px;
+  margin-bottom: 15px;
+  width: 97%;
+  font-size: 17px;
+  text-align: left;
+}
+
+/* (end) section */
+
+/* (start) fetched content list*/
+/* content tabs */
+.cut-content {  
+text-decoration:line-through;
+color: #C1BDBD;
+}
+
+.nav>li {
+  float: none!important;
+  display: inline-block!important;
+}
+/* new class */
+
+.nav-tabs-right {
+  text-align: right;
+  font-size: 0;
+  /* prevent floated child bug */
+}
+.nav-tabs-right>li {
+  display: inline-block;
+  clear: left;
+  float: none;
+  text-align: right;
+  font-size: 16px;
+}
+/* content tabs */
+
+.content-list{
+  list-style-type: none;
+  padding-left:0;
+  padding-right: 20px;
+}
+
+.drag {
+  cursor: move;
+  float:left;
+  margin-right:5px;
+  background-color: #DADADA;
+}
+
+.content-list-element {
+  text-align:left;
+  font-size: 18px;
+}
+.content-list-extra {
+  padding-right: 8px;
+  float:right;
+  color:green;
+  cursor: pointer;
+  padding-top: 4px;
+}
+
+.panel-collapse {
+  text-align: center;
+}
+
+.extra-row > p{
+ display:inline;
+}
+
+.extra-row p:first-child{
+  color:green;
+}
+
+
+.content-list-delete {
+  float:right;
+  color:red;
+  cursor: pointer;
+  padding-top: 4px;
+}
+
+.content-list-undo {
+  float:right;
+  color:green;
+  cursor: pointer;
+  padding-top: 4px;
+}
+/* (end) fetched content list*/
+/* =====> release note view page*/
+
+/* cross mark on hover */
+#section-delete{
+  position: relative;
+  display: none;
+  float: right;
+  right: 25px;
+  font-size: 20px;
+  color: #B1ADAD;
+}
+
+#main-content div h3:hover {
+  opacity: 0.5;
+}
+
+#main-content div h3:hover #section-delete{
+  display:block;
+  color:red;
+}
+
+#section-content-delete{
+  position: relative;
+  display: none;
+  float: right;
+  right: 0px;
+  font-size: 20px;
+  color: #B1ADAD;
+}
+
+#main-content div ul li:hover #section-content-delete{
+  display:block;
+  color:red;
+}
+
+
+
+
+/* ==================== footer start =======================*/
+.footer-distributed{
+  background-color: #8099B7;
+  box-shadow: 0 1px 1px 0 rgba(0, 0, 0, 0.12);
+  box-sizing: border-box;
+  width: 100%;
+  text-align: left;
+  font: normal 16px sans-serif;
+
+  padding: 45px 50px;
+
+}
+
+.footer-distributed .footer-left p{
+  color:  #8f9296;
+  font-size: 14px;
+  margin: 0;
+}
+
+/* Footer links */
+
+.footer-distributed p.footer-links{
+  font-size:18px;
+  font-weight: bold;
+  color:  #ffffff;
+  margin: 0 0 10px;
+  padding: 0;
+}
+
+.footer-distributed p.footer-links a{
+  display:inline-block;
+  line-height: 1.8;
+  text-decoration: none;
+  color:  inherit;
+}
+
+.footer-distributed .footer-right{
+  float: right;
+  margin-top: 6px;
+  max-width: 180px;
+}
+
+.footer-distributed .footer-right a{
+  display: inline-block;
+  width: 35px;
+  height: 35px;
+  background-color:  #33383b;
+  border-radius: 2px;
+
+  font-size: 20px;
+  color: #ffffff;
+  text-align: center;
+  line-height: 35px;
+
+  margin-left: 3px;
+}
+/* footer media queries*/
+@media (max-width: 600px) {
+
+  .footer-distributed .footer-left,
+  .footer-distributed .footer-right{
+    text-align: center;
+  }
+
+  .footer-distributed .footer-right{
+    float: none;
+    margin: 0 auto 20px;
+  }
+
+  .footer-distributed .footer-left p.footer-links{
+    line-height: 1.8;
+  }
+}
+
+/* ====================== footer end =======================*/

@@ -1,0 +1,19 @@
+<div>
+  <div class='extra-row'>
+    <p>created by: 
+    </p>
+    <p>{{content.created_by}}
+      <img ng-src='{{content.creator_avatar}}' alt='profile pic' style='border-radius:50px;width:40px;height:40px' />
+    </p>
+  </div>
+  <div class='extra-row'>
+    <p>closed on: 
+    </p>
+    <p>{{(content.closed_date*1000) - 2209008600000| date: 'MMM d, y'}}
+    </p>
+  </div>
+  <p>
+    <a href='{{content.web_link}}' target='_blank'>Full view
+    </a>
+  </p>
+</div>
