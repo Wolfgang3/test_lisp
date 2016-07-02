@@ -6,11 +6,14 @@
 (ql:quickload :simple-date-time)
 (ql:quickload :local-time)
 (ql:quickload :jsown)
+(ql:quickload :cl-json)
 (ql:quickload :drakma)
 (ql:quickload :hunchentoot)
 (ql:quickload :cl-who)
 (ql:quickload :parenscript)
 (ql:quickload :postmodern)
+(ql:quickload :yason)
+
 ;;=========================
 
 ;;======= package ========
@@ -92,7 +95,7 @@
            (:table :border 0 :cellpadding 4 :cellspacing 4
             (:tr
              (:td "User Id: ")
-             (:td (:input :type :text :name "userid")))
+             (:td (:input :type :number :name "userid")))
             (:tr
              (:td "Password: ")
              (:td (:input :type :password :name "pass")))
@@ -135,7 +138,7 @@
 
 
 ;;============= add project ==============
-;;git token= c1e6be6c1de8c9460d69f63ad4ddc965440a13d1
+;;git token= 0db42a2a18ffbeb1714fa9f8a50e1b80578290a8
 ;;asana token= 0/af8d04325c718270be55efe98be24869
 
 (push (create-regex-dispatcher "/release_notes/project/add_project" 'add-project-form) *dispatch-table*)
@@ -250,7 +253,7 @@
 (defun get-selected-workspace-id (work_id)
   (ps "(alert \"hello\" )" )
   (setf *lol* work_id)
-  )
+ )
 ;;(chain document (cookie == ='username 'John))
 
 ;;get all git repos list
@@ -315,9 +318,15 @@
   (return-from get-repo-name-from-project-id (car (car repo_name)))
   ))
 
+;; get git_repo id from project_id
+(defun get-gr-id-from-project-id (project_id)
+  (let ((gr_id (query (:select 'gr_id :from 'git_repo :where (:= 'project_id project_id)))))
+  (return-from get-gr-id-from-project-id (car (car gr_id)))
+  ))
+
 ;; get start_date or end_date from release_id
 (defun get-date-from-release-id (which_date release_id)
-  (let ((date (query (:select (:to_char which_date "YYYY-DD-MM") :from 'release_note :where (:= 'release_id release_id)))))
+  (let ((date (query (:select (:to_char which_date "YYYY-MM-DD") :from 'release_note :where (:= 'release_id release_id)))))
   (return-from get-date-from-release-id (car (car date)))
   ))
 
@@ -327,12 +336,11 @@
   (local-time:format-timestring nil
      (local-time::parse-timestring stamp) :format '((:year 4) "-" (:month 2) "-" (:day 2) "T" (:hour 2) ":" (:min 2) ":" (:sec 2) "Z")))
 
+;;================= save all the commits in db ============= 
 ;; get  all git commits(sha,message) of the project repo the commits  from *str-date* to *end-date*
-(defvar *end-date*)
-(defvar *commits-sha-list*)
-(defun get-commits-list (release_id)
-  (setf *commits-sha-list* nil)
+(defun save-all-git-commits (release_id)
   (let* ((proj_id (get-project-id-from-release-id release_id))
+	 (gr_id (get-gr-id-from-project-id proj_id))
 	 (repo_name (get-repo-name-from-project-id proj_id))
 	 (url (concatenate 'string "https://api.github.com/repos/" repo_name "/commits"))
 	 (git_token (get-token-from-projectid 'git_token proj_id))
@@ -344,16 +352,166 @@
 		            (cons "since" (convert-date start_date))
 			    (cons "until"(convert-date  end_date))
 			    (cons "per_page" "100"))))))
+    (loop for rec in json
+       do	 
+	 (query (:insert-into 'commit :set 'gr_id gr_id 'release_id release_id 'message (jsown:val (jsown:val  rec "commit") "message") 'sha_key (jsown:val  rec "sha") 'date (jsown:val (jsown:val (jsown:val  rec "commit") "committer") "date")))
+	 )))
+
+;;===========================================================
+;=> (save-all-git-commits "1")
+
+;;================ save all the tasks in db==================
+
+;; get asana_project_id from users main project_id
+(defun get-asana-id-from-project-id (project_id)
+  (let ((asana_project_id (query (:select 'asana_project_id :from 'asana_project :where (:= 'project_id project_id)))))
+    (return-from get-asana-id-from-project-id (car (car asana_project_id)))))
+
+;; get ap_id of the table asana_project from project_id
+(defun get-ap-id-from-project-id (project_id)
+  (let ((ap_id (query (:select 'ap_id :from 'asana_project :where (:= 'project_id project_id)))))
+    (return-from get-ap-id-from-project-id (car (car ap_id)))))
+
+
+;;=> check if task date is less then end_date
+;;   (task_date < end_date)
+(defun is-task-date-less-then-end-date? (task_date end_date)
+  (local-time:timestamp< (local-time:parse-timestring task_date) (local-time:parse-timestring end_date)))
+
+;;=> get all the task which are completed_since the start_date
+(defun get-tasks-completed-since (asana_token asana_proj_id start_date)
+  (let* ((url (concatenate 'string "https://app.asana.com/api/1.0/projects/" asana_proj_id "/tasks"))
+	 (json (jsown:parse
+		(drakma:http-request url
+		       :parameters (list (cons "access_token" asana_token)
+			     (cons "completed_since" (convert-date start_date))			  
+			     (cons "opt_fields"  "completed_at,name,assignee.name" ))))))
+    (return-from get-tasks-completed-since json)
+    ))
+;;(get-tasks-completed-since "0/af8d04325c718270be55efe98be24869" "113203241574212" "2016-04-20")
+
+(defun save-all-asana-tasks (release_id)
+  (let* ((proj_id (get-project-id-from-release-id release_id))
+	 (ap_id (get-ap-id-from-project-id proj_id))
+	 (asana_proj_id (get-asana-id-from-project-id proj_id))
+	 (asana_token (get-token-from-projectid 'asana_token proj_id))
+	 (start_date (get-date-from-release-id 'start_date release_id))
+	 (end_date (get-date-from-release-id 'end_date release_id)))
+
+    (loop for rec in (jsown:val (get-tasks-completed-since asana_token asana_proj_id start_date) "data")
+       do
+	 (let* ((task_date (jsown:val rec "completed_at"))
+		(task_name (jsown:val rec "name"))
+		(task_id (jsown:val rec "id"))
+		(assignee_obj (jsown:val rec "assignee"))
+		)
+	   (if (not (eq task_date NIL))
+	       (if (eq (is-task-date-less-then-end-date? task_date end_date) T)   
+	    (query (:insert-into 'task :set 'ap_id ap_id 'release_id release_id 'asana_task_id task_id 'name task_name 'assignee_id  (jsown:val assignee_obj "id") 'completed_at task_date))
+	    ))))
+    ))
+;=> (SAVE-ALL-ASANA-TASKS "1")
+;;===========================================================
+
+
+;;================ save all the pr's  in db  ================
+
+;;check if the closed date falles between start_date and end_date
+;;  this will return T if it satisfies
+(defun pr-date-check (closed_at start_date end_date)
+  (and (local-time:timestamp< (local-time:parse-timestring closed_at) (local-time:parse-timestring end_date))
+       (local-time:timestamp> (local-time:parse-timestring closed_at) (local-time:parse-timestring start_date)))  
+  )
+
+(defun save-all-pull-requests (release_id)
+  (let* ((proj_id (get-project-id-from-release-id release_id))
+	 (gr_id (get-gr-id-from-project-id proj_id))
+	 (repo_name (get-repo-name-from-project-id proj_id))
+	 (url (concatenate 'string "https://api.github.com/repos/" repo_name "/pulls"))
+	 (git_token (get-token-from-projectid 'git_token proj_id))
+	 (start_date (get-date-from-release-id 'start_date release_id))
+	 (end_date (get-date-from-release-id 'end_date release_id))
+	 (json (jsown:parse
+	       (drakma:http-request url
+		 :parameters (list (cons "access_token" git_token) 
+				   (cons "state" "closed")
+				   (cons "per_page" "100"))))))
 
     (loop for rec in json
        do
-	 (setf *commits-sha-list* (append *commits-sha-list* (list (jsown:val  rec "sha")))))
+	 (let* ((closed_at (jsown:val  rec "closed_at"))
+		(pr_title (jsown:val  rec "title"))
+		(pull_request_id (jsown:val  rec "number")))
+	   (if (eq (pr-date-check closed_at start_date end_date) T)   
+	       (query (:insert-into 'pull_request :set 'gr_id gr_id 'release_id release_id 'pull_request_id pull_request_id  'title pr_title 'date closed_at)))))
     ))
+;;===========================================================
 
-(GET-COMMITS-LIST "1")
 
-(loop for rec in json
-       do
-	 (setf *commits-sha-list* (append *commits-sha-list* (list (jsown:val  rec "sha")))))
+;;============ add section for the release content ===========
+(defun add-section (release_id title)
+  (query (:insert-into 'section :set 'release_id release_id 'sec_title title))
+  )
 
-;;=============================================================
+;;=========== add content to the release note ===============
+;; adding content by passing either(commit_id/task_id/pull_request_id)
+(defun add-content-to-release-note (which_key key sec_id  title description completed_date)
+  (query (:insert-into 'content :set which_key key 'sec_id sec_id 'title title 'description description 'completed_date completed_date))
+  )
+
+;;=> (add-content-to-release-note 'c_id  "1" "1" "title 1" "decription 1" "2016-04-30")
+
+;;
+
+;;;;;;;;;;;;;;;;; new clos object ;;;;;;;;;;;;;;;;;;;;
+(defclass user ()
+  ((user_id :initarg :user_id
+	    :reader user-user_id)
+   (name :initarg :name
+	 :reader user-name)
+   (email_id :initarg :email_id
+	     :reader user-email_id)
+   (password :initarg :password
+	     :reader user-password)
+   (proj_list :initarg :proj_list
+	      :reader user-proj_list)))
+
+(defparameter user1 (make-instance 'user :user_id 1 :name "wolfgang furtado" :email_id "wolfgang_furtado@yahoo.com" :password 'wolfgang@3 :proj_list (list)))
+
+;; adding projects to the user
+(setf (user-proj_list user1) (list (user-proj_list user1) 'obj1))
+
+;; method of the class
+(defun add-user (name email_id password proj_list)
+  (make-instance 'user :user_id user_id :name name :email_id email_id :password password :proj_list proj_list))
+
+;; creating a instance of the class
+(defparameter user1 (add-user  "wolfgang furtado" "wol@gmail.com" 'Wolfgang3 (list)))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; project class
+(defclass project ()
+  ((project_id :col-type serial :initarg :project_id
+	       :reader project_id)
+   (user_id :col-type integer :initarg :user_id
+	    :reader project-user_id)
+   (name :col-type (varchar 30) :initarg :name
+	 :reader project-name)
+   (git_token :col-type string :initarg :git_token
+	      :reader project-git_token)
+   (asana_token :col-type string :initarg :asana_token
+		:reader project-asana_token)
+   (created_date :col-type (or db-null timestamp) :col-default (current_timestamp 2)   
+		:initarg :created_date
+		:reader project-created_date))
+  (:metaclass dao-class)
+  (:keys project_id))
+
+(insert-dao (make-instance 'country :name "The Netherlands"
+                                    :inhabitants 16800000
+                                    :sovereign "Willem-Alexander"))
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
